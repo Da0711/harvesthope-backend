@@ -1,7 +1,7 @@
 package com.harvesthope.model.service;
 
 import com.harvesthope.model.entity.Doacao;
-import com.harvesthope.repository.DoacaoRepository;
+import com.harvesthope.model.repository.DoacaoRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

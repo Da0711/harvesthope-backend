@@ -105,3 +105,19 @@ DELETE http://localhost:8080/api/v1/instituicoes/3
 
 ### Confirmar exclusão
 GET http://localhost:8080/api/v1/instituicoes/3
+
+### Criar instituição
+POST http://localhost:8080/api/v1/instituicoes
+Content-Type: application/json
+
+{
+    "nome": "Instituição Neymar",
+    "cnpj": "12.345.678/0001-90",
+    "descricao": "Instituição que atende famílias em situação de vulnerabilidade.",
+    "localizacao": "São Roque - SP",
+    "telefone": "(11) 99999-9999",
+    "email": "contato@eneymar.com",
+    "site": "https://www.neymar.com"
+}
+
+POST http://localhost:8080/api/auth/signin
