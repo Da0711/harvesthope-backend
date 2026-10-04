@@ -1,0 +1,107 @@
+### Criar usuário
+POST http://localhost:8080/api/v1/usuarios
+Content-Type: application/json
+
+{
+    "nome": "João Silva",
+    "email": "joao.silva@harvesthope.com",
+    "senha": "123456",
+    "tipoUsuario": "DOADOR"
+}
+
+### Listar usuários
+GET http://localhost:8080/api/v1/usuarios
+
+### Buscar usuário por ID
+GET http://localhost:8080/api/v1/usuarios/2
+
+### Atualizar usuário
+PUT http://localhost:8080/api/v1/usuarios/2
+Content-Type: application/json
+
+{
+    "nome": "João Silva Atualizado",
+    "email": "joao.atualizado@harvesthope.com",
+    "senha": "654321",
+    "tipoUsuario": "INSTITUICAO"
+}
+
+### Excluir usuário
+DELETE http://localhost:8080/api/v1/usuarios/2
+
+#### Criar doação
+POST http://localhost:8080/doacoes
+Content-Type: application/json
+
+{
+    "nomeAlimento": "Arroz",
+    "quantidade": 10,
+    "unidade": "kg",
+    "dataValidade": "2026-12-30",
+    "descricao": "Arroz para doação",
+    "foto": "arroz.jpg",
+    "status": "DISPONIVEL"
+}
+
+### Listar doações
+GET http://localhost:8080/doacoes
+
+### Buscar doação por ID
+GET http://localhost:8080/doacoes/5
+
+### Atualizar doação
+PUT http://localhost:8080/doacoes/5
+Content-Type: application/json
+
+{
+    "nomeAlimento": "Arroz Integral",
+    "quantidade": 20,
+    "unidade": "kg",
+    "dataValidade": "2027-01-15",
+    "descricao": "Arroz integral para doação",
+    "foto": "arroz-integral.jpg",
+    "status": "RESERVADO"
+}
+
+### Excluir doação
+DELETE http://localhost:8080/doacoes/5
+
+### Criar instituição
+POST http://localhost:8080/api/v1/instituicoes
+Content-Type: application/json
+
+{
+    "nome": "Instituição Esperança",
+    "cnpj": "12.345.678/0001-90",
+    "descricao": "Instituição que atende famílias em situação de vulnerabilidade.",
+    "localizacao": "Barueri - SP",
+    "telefone": "(11) 99999-9999",
+    "email": "contato@esperanca.com",
+    "site": "https://www.esperanca.com"
+}
+
+### Listar instituições
+GET http://localhost:8080/api/v1/instituicoes
+
+### Buscar instituição por ID
+GET http://localhost:8080/api/v1/instituicoes/3
+
+### Atualizar instituição
+PUT http://localhost:8080/api/v1/instituicoes/3
+Content-Type: application/json
+
+{
+    "nome": "Instituição Esperança Atualizada",
+    "cnpj": "12.345.678/0001-90",
+    "descricao": "Instituição atualizada que atende famílias em situação de vulnerabilidade.",
+    "localizacao": "Barueri - SP",
+    "telefone": "(11) 98888-8888",
+    "email": "contato@esperanca.com",
+    "site": "https://www.esperanca.com"
+}
+
+### Excluir instituição
+DELETE http://localhost:8080/api/v1/instituicoes/3
+
+### Confirmar exclusão
+GET http://localhost:8080/api/v1/instituicoes/3
