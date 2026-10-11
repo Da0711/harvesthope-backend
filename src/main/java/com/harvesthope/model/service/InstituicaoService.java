@@ -1,7 +1,7 @@
 package com.harvesthope.model.service;
 
 import com.harvesthope.model.entity.Instituicao;
-import com.harvesthope.repository.InstituicaoRepository;
+import com.harvesthope.model.repository.InstituicaoRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

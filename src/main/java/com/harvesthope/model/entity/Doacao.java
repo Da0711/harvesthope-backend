@@ -1,6 +1,17 @@
+
 package com.harvesthope.model.entity;
 
-import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "doacao")
@@ -25,6 +36,14 @@ public class Doacao {
     private String foto;
 
     private String status;
+
+    @Column(name = "local_retirada")
+    private String localRetirada;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "usuario_id")
+    @JsonIgnoreProperties({"senha"})
+    private Usuario doador;
 
     public Long getId() {
         return id;
@@ -88,5 +107,21 @@ public class Doacao {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getLocalRetirada() {
+        return localRetirada;
+    }
+
+    public void setLocalRetirada(String localRetirada) {
+        this.localRetirada = localRetirada;
+    }
+
+    public Usuario getDoador() {
+        return doador;
+    }
+
+    public void setDoador(Usuario doador) {
+        this.doador = doador;
     }
 }

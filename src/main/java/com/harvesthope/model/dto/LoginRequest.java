@@ -1,3 +1,4 @@
+
 package com.harvesthope.model.dto;
 
 public class LoginRequest {

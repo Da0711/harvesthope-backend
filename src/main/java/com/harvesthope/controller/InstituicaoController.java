@@ -1,52 +1,61 @@
+
 package com.harvesthope.controller;
 
+import com.harvesthope.model.dto.CadastroInstituicaoRequest;
 import com.harvesthope.model.entity.Instituicao;
-import com.harvesthope.model.service.InstituicaoService;
+import com.harvesthope.model.repository.InstituicaoRepository;
+import com.harvesthope.model.service.CadastroInstituicaoService;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/instituicoes")
 public class InstituicaoController {
 
-    private final InstituicaoService instituicaoService;
+    private final InstituicaoRepository instituicaoRepository;
+    private final CadastroInstituicaoService cadastroService;
 
-    public InstituicaoController(InstituicaoService instituicaoService) {
-        this.instituicaoService = instituicaoService;
-    }
-
-    @PostMapping
-    public ResponseEntity<Instituicao> salvar(@RequestBody Instituicao instituicao) {
-        return ResponseEntity.ok(instituicaoService.salvar(instituicao));
+    public InstituicaoController(
+            InstituicaoRepository instituicaoRepository,
+            CadastroInstituicaoService cadastroService) {
+        this.instituicaoRepository = instituicaoRepository;
+        this.cadastroService = cadastroService;
     }
 
     @GetMapping
-    public ResponseEntity<List<Instituicao>> listar() {
-        return ResponseEntity.ok(instituicaoService.listar());
+    public ResponseEntity<List<Instituicao>> listarTodas() {
+        return ResponseEntity.ok(instituicaoRepository.findAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Instituicao> buscarPorId(@PathVariable Long id) {
-        return instituicaoService.buscarPorId(id)
+    public ResponseEntity<Instituicao> buscarPorId(
+            @PathVariable Long id) {
+        return instituicaoRepository.findById(id)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Instituicao> atualizar(
-            @PathVariable Long id,
-            @RequestBody Instituicao instituicao) {
+    @PostMapping("/cadastro")
+    public ResponseEntity<?> cadastrar(
+            @RequestBody CadastroInstituicaoRequest request) {
+        try {
+            Instituicao instituicao = cadastroService.cadastrar(request);
 
-        instituicao.setId(id);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(Map.of(
+                            "mensagem", "Instituição cadastrada com sucesso.",
+                            "instituicaoId", instituicao.getId(),
+                            "nome", instituicao.getNome()
+                    ));
 
-        return ResponseEntity.ok(instituicaoService.atualizar(instituicao));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> excluir(@PathVariable Long id) {
-        instituicaoService.excluir(id);
-        return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("mensagem", e.getMessage()));
+        }
     }
 }
