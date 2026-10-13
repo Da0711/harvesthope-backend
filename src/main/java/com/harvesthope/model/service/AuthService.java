@@ -1,32 +1,39 @@
 
 package com.harvesthope.model.service;
 
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.harvesthope.config.JwtService;
 import com.harvesthope.model.dto.LoginResponse;
 import com.harvesthope.model.entity.Usuario;
 import com.harvesthope.model.repository.UsuarioRepository;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public AuthService(UsuarioRepository usuarioRepository) {
+    public AuthService(
+            UsuarioRepository usuarioRepository,
+            JwtService jwtService) {
         this.usuarioRepository = usuarioRepository;
+        this.jwtService = jwtService;
         this.passwordEncoder = new BCryptPasswordEncoder();
     }
 
+    @Transactional
     public LoginResponse autenticar(String email, String senha) {
-
         if (email == null || email.isBlank()
                 || senha == null || senha.isBlank()) {
             return null;
         }
 
-        Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElse(null);
+        String emailNormalizado = email.trim().toLowerCase();
+        Usuario usuario = usuarioRepository.findByEmail(emailNormalizado);
 
         if (usuario == null || usuario.getSenha() == null) {
             return null;
@@ -34,7 +41,6 @@ public class AuthService {
 
         String senhaArmazenada = usuario.getSenha();
 
-        // Compatibilidade temporária com senhas antigas em texto puro.
         if (!senhaArmazenada.startsWith("$2a$")
                 && !senhaArmazenada.startsWith("$2b$")
                 && !senhaArmazenada.startsWith("$2y$")) {
@@ -43,7 +49,6 @@ public class AuthService {
                 return null;
             }
 
-            // Converte a senha antiga para BCrypt após login válido.
             usuario.setSenha(passwordEncoder.encode(senha));
             usuarioRepository.save(usuario);
 
@@ -51,10 +56,17 @@ public class AuthService {
             return null;
         }
 
+        String token = jwtService.gerarToken(
+                usuario.getId(),
+                usuario.getEmail(),
+                usuario.getTipoUsuario()
+        );
+
         return new LoginResponse(
                 usuario.getId(),
                 usuario.getNome(),
-                usuario.getEmail()
+                usuario.getEmail(),
+                token
         );
     }
 }

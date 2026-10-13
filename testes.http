@@ -1,130 +1,390 @@
-### Criar usuário
-POST http://localhost:8080/api/v1/usuarios
+### HARVEST HOPE — TESTES DA API
+### Ferramenta: REST Client (VS Code)
+### Execute uma requisição por vez. Faça login e atualize os tokens antes das rotas protegidas.
+### Não compartilhe nem versione tokens JWT.
+
+@baseUrl = http://localhost:8080
+@doadorId = 3
+@instituicaoId = 6
+@idInexistente = 999999
+
+# Copie os tokens atuais das respostas de login:
+@tokenDoador = COLE_O_TOKEN_ATUAL_DO_DOADOR
+@tokenInstituicao = COLE_O_TOKEN_ATUAL_DA_INSTITUICAO
+
+# Preencha com os IDs retornados pelas requisições de criação:
+@doacaoTesteId = SUBSTITUA_PELO_ID_DA_DOACAO_CRIADA
+@solicitacaoTesteId = SUBSTITUA_PELO_ID_DA_SOLICITACAO_CRIADA
+
+### ============================================================
+### 1. AUTENTICAÇÃO
+### ============================================================
+
+### 1.1 Login do doador — esperado: 200
+# Copie o campo token da resposta para @tokenDoador.
+# @name loginDoador
+POST {{baseUrl}}/api/auth/signin
 Content-Type: application/json
+Accept: application/json
 
 {
-    "nome": "João Silva",
-    "email": "joao.silva@harvesthope.com",
-    "senha": "123456",
-    "tipoUsuario": "DOADOR"
+  "email": "teste@harvesthope.com",
+  "senha": "123456"
 }
 
-### Listar usuários
-GET http://localhost:8080/api/v1/usuarios
-
-### Buscar usuário por ID
-GET http://localhost:8080/api/v1/usuarios/2
-
-### Atualizar usuário
-PUT http://localhost:8080/api/v1/usuarios/2
+### 1.2 Login da instituição — esperado: 200
+# Copie o campo token da resposta para @tokenInstituicao.
+# @name loginInstituicao
+POST {{baseUrl}}/api/auth/signin
 Content-Type: application/json
+Accept: application/json
 
 {
-    "nome": "João Silva Atualizado",
-    "email": "joao.atualizado@harvesthope.com",
-    "senha": "654321",
-    "tipoUsuario": "INSTITUICAO"
+  "email": "teste.minimo@harvesthope.com",
+  "senha": "TesteHH2026!"
 }
 
-### Excluir usuário
-DELETE http://localhost:8080/api/v1/usuarios/2
-
-#### Criar doação
-POST http://localhost:8080/doacoes
+### 1.3 Login com senha incorreta — esperado: 401
+POST {{baseUrl}}/api/auth/signin
 Content-Type: application/json
+Accept: application/json
 
 {
-    "nomeAlimento": "Arroz",
-    "quantidade": 10,
-    "unidade": "kg",
-    "dataValidade": "2026-12-30",
-    "descricao": "Arroz para doação",
-    "foto": "arroz.jpg",
-    "status": "DISPONIVEL"
+  "email": "teste@harvesthope.com",
+  "senha": "senha-incorreta"
 }
 
-### Listar doações
-GET http://localhost:8080/doacoes
+### ============================================================
+### 2. USUÁRIOS
+### ============================================================
 
-### Buscar doação por ID
-GET http://localhost:8080/doacoes/5
+### 2.1 Consultar usuário existente — token do doador
+GET {{baseUrl}}/api/v1/usuarios/{{doadorId}}
+Authorization: Bearer {{tokenDoador}}
+Accept: application/json
 
-### Atualizar doação
-PUT http://localhost:8080/doacoes/5
+### 2.2 Listar usuários — esperado: 403 conforme regra atual
+GET {{baseUrl}}/api/v1/usuarios
+Authorization: Bearer {{tokenDoador}}
+Accept: application/json
+
+### 2.3 Consultar usuário inexistente — esperado: 404 se autorizado
+GET {{baseUrl}}/api/v1/usuarios/{{idInexistente}}
+Authorization: Bearer {{tokenDoador}}
+Accept: application/json
+
+### 2.4 Cadastrar doador — CRIA registro; troque o e-mail em cada execução
+POST {{baseUrl}}/api/v1/usuarios
 Content-Type: application/json
+Accept: application/json
 
 {
-    "nomeAlimento": "Arroz Integral",
-    "quantidade": 20,
-    "unidade": "kg",
-    "dataValidade": "2027-01-15",
-    "descricao": "Arroz integral para doação",
-    "foto": "arroz-integral.jpg",
-    "status": "RESERVADO"
+  "nome": "Doador HTTP",
+  "email": "doador.http.20261012@harvesthope.com",
+  "senha": "SenhaTeste123!",
+  "tipoUsuario": "DOADOR"
 }
 
-### Excluir doação
-DELETE http://localhost:8080/doacoes/5
+### ============================================================
+### 3. INSTITUIÇÕES
+### ============================================================
 
-### Criar instituição
-POST http://localhost:8080/api/v1/instituicoes
+### 3.1 Listar instituições — token da instituição
+GET {{baseUrl}}/api/v1/instituicoes
+Authorization: Bearer {{tokenInstituicao}}
+Accept: application/json
+
+### 3.2 Consultar instituição conhecida — ID 6
+GET {{baseUrl}}/api/v1/instituicoes/{{instituicaoId}}
+Authorization: Bearer {{tokenInstituicao}}
+Accept: application/json
+
+### 3.3 Consultar instituição inexistente — esperado: 404 se autorizado
+GET {{baseUrl}}/api/v1/instituicoes/{{idInexistente}}
+Authorization: Bearer {{tokenInstituicao}}
+Accept: application/json
+
+### 3.4 Cadastro integrado — CRIA usuário e instituição
+# Execute apenas se quiser criar registros novos.
+# Troque e-mails e CNPJ a cada execução.
+POST {{baseUrl}}/api/v1/instituicoes/cadastro
 Content-Type: application/json
+Accept: application/json
 
 {
-    "nome": "Instituição Esperança",
-    "cnpj": "12.345.678/0001-90",
-    "descricao": "Instituição que atende famílias em situação de vulnerabilidade.",
-    "localizacao": "Barueri - SP",
-    "telefone": "(11) 99999-9999",
-    "email": "contato@esperanca.com",
-    "site": "https://www.esperanca.com"
+  "nomeResponsavel": "Responsável HTTP",
+  "emailResponsavel": "responsavel.http.20261012@harvesthope.com",
+  "senha": "TesteHH2026!",
+  "nomeInstituicao": "Instituição HTTP Teste",
+  "cnpj": "98765432000110",
+  "emailInstituicao": "instituicao.http.20261012@harvesthope.com",
+  "descricao": "Instituição criada para testes da API.",
+  "localizacao": "Barueri - SP",
+  "telefone": "(11) 98888-7777",
+  "site": "https://exemplo.com"
 }
 
-### Listar instituições
-GET http://localhost:8080/api/v1/instituicoes
+### ============================================================
+### 4. DOAÇÕES
+### Use token de DOADOR nas operações de doação.
+### ============================================================
 
-### Buscar instituição por ID
-GET http://localhost:8080/api/v1/instituicoes/3
+### 4.1 Listar doações — esperado: 200
+GET {{baseUrl}}/api/v1/doacoes
+Authorization: Bearer {{tokenDoador}}
+Accept: application/json
 
-### Atualizar instituição
-PUT http://localhost:8080/api/v1/instituicoes/3
+### 4.2 Consultar doação existente — exemplo ID 9; confirme se existe
+GET {{baseUrl}}/api/v1/doacoes/9
+Authorization: Bearer {{tokenDoador}}
+Accept: application/json
+
+### 4.3 Criar doação de teste — CRIA registro; anote o ID retornado
+POST {{baseUrl}}/api/v1/doacoes
+Authorization: Bearer {{tokenDoador}}
 Content-Type: application/json
+Accept: application/json
 
 {
-    "nome": "Instituição Esperança Atualizada",
-    "cnpj": "12.345.678/0001-90",
-    "descricao": "Instituição atualizada que atende famílias em situação de vulnerabilidade.",
-    "localizacao": "Barueri - SP",
-    "telefone": "(11) 98888-8888",
-    "email": "contato@esperanca.com",
-    "site": "https://www.esperanca.com"
+  "nomeAlimento": "Doação HTTP - Arroz",
+  "descricao": "Doação criada para testar solicitações.",
+  "quantidade": 5,
+  "unidade": "kg",
+  "dataValidade": "2026-12-31",
+  "localRetirada": "Barueri - SP",
+  "foto": ""
 }
 
-### Excluir instituição
-DELETE http://localhost:8080/api/v1/instituicoes/3
+### 4.4 Consultar doação criada — atualize @doacaoTesteId antes
+GET {{baseUrl}}/api/v1/doacoes/{{doacaoTesteId}}
+Authorization: Bearer {{tokenDoador}}
+Accept: application/json
 
-### Confirmar exclusão
-GET http://localhost:8080/api/v1/instituicoes/3
-
-### Criar instituição
-POST http://localhost:8080/api/v1/instituicoes
+### 4.5 Atualizar doação de teste — ALTERA registro
+# Use somente doação disponível e pertencente ao doador.
+PUT {{baseUrl}}/api/v1/doacoes/{{doacaoTesteId}}
+Authorization: Bearer {{tokenDoador}}
 Content-Type: application/json
+Accept: application/json
 
 {
-    "nome": "Instituição Neymar",
-    "cnpj": "12.345.678/0001-90",
-    "descricao": "Instituição que atende famílias em situação de vulnerabilidade.",
-    "localizacao": "São Roque - SP",
-    "telefone": "(11) 99999-9999",
-    "email": "contato@eneymar.com",
-    "site": "https://www.neymar.com"
+  "nomeAlimento": "Doação HTTP - Arroz Atualizada",
+  "descricao": "Teste de atualização da API.",
+  "quantidade": 4,
+  "unidade": "kg",
+  "dataValidade": "2026-12-31",
+  "localRetirada": "Barueri - SP",
+  "foto": ""
 }
 
-### LOGIN
-POST http://localhost:8080/api/auth/signin
+### 4.6 Atualizar doação inexistente — esperado: 404
+PUT {{baseUrl}}/api/v1/doacoes/{{idInexistente}}
+Authorization: Bearer {{tokenDoador}}
 Content-Type: application/json
+Accept: application/json
 
 {
-    "email": "teste@harvesthope.com",
-    "senha": "123456"
+  "nomeAlimento": "Doação inexistente",
+  "descricao": "Teste de atualização de ID inexistente.",
+  "quantidade": 1,
+  "unidade": "kg",
+  "dataValidade": "2026-12-31",
+  "localRetirada": "Barueri - SP",
+  "foto": ""
 }
+
+### 4.7 Excluir doação inexistente — esperado: 404
+DELETE {{baseUrl}}/api/v1/doacoes/{{idInexistente}}
+Authorization: Bearer {{tokenDoador}}
+Accept: application/json
+
+### 4.8 Listar doações sem token — esperado: 401
+GET {{baseUrl}}/api/v1/doacoes
+Accept: application/json
+
+### ============================================================
+### 5. VALIDAÇÕES DE DOAÇÕES
+### Esperado: 400 nos casos de dados inválidos.
+### ============================================================
+
+### 5.1 Cadastro sem nome do alimento — esperado: 400
+POST {{baseUrl}}/api/v1/doacoes
+Authorization: Bearer {{tokenDoador}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "quantidade": 5,
+  "unidade": "kg",
+  "dataValidade": "2026-12-31",
+  "descricao": "Teste sem nome do alimento."
+}
+
+### 5.2 Quantidade zero — esperado: 400
+POST {{baseUrl}}/api/v1/doacoes
+Authorization: Bearer {{tokenDoador}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "nomeAlimento": "Arroz - Teste Quantidade",
+  "quantidade": 0,
+  "unidade": "kg",
+  "dataValidade": "2026-12-31",
+  "descricao": "Teste de quantidade inválida."
+}
+
+### 5.3 Formato de data inválido — esperado: 400
+POST {{baseUrl}}/api/v1/doacoes
+Authorization: Bearer {{tokenDoador}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "nomeAlimento": "Arroz - Teste Data",
+  "quantidade": 5,
+  "unidade": "kg",
+  "dataValidade": "31/12/2026",
+  "descricao": "Teste de formato de data inválido."
+}
+
+### 5.4 Validade no passado — esperado: 400
+POST {{baseUrl}}/api/v1/doacoes
+Authorization: Bearer {{tokenDoador}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "nomeAlimento": "Arroz - Teste Validade",
+  "quantidade": 5,
+  "unidade": "kg",
+  "dataValidade": "2020-01-01",
+  "descricao": "Teste de data vencida."
+}
+
+### 5.5 Status inválido na atualização — esperado: 400
+# Use uma doação de teste disponível e pertencente ao doador.
+PUT {{baseUrl}}/api/v1/doacoes/{{doacaoTesteId}}
+Authorization: Bearer {{tokenDoador}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "nomeAlimento": "Doação HTTP - Teste Status",
+  "descricao": "Teste de status inválido.",
+  "quantidade": 2,
+  "unidade": "kg",
+  "dataValidade": "2026-12-31",
+  "localRetirada": "Barueri - SP",
+  "foto": "",
+  "status": "ENTREGUE"
+}
+
+### ============================================================
+### 6. SOLICITAÇÕES
+### Criar/listar: token da instituição.
+### Aceitar/recusar: token do doador proprietário da doação.
+### Use uma doação disponível e sem solicitação anterior.
+### ============================================================
+
+### 6.1 Criar solicitação — CRIA registro
+POST {{baseUrl}}/api/v1/solicitacoes
+Authorization: Bearer {{tokenInstituicao}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "instituicaoId": {{instituicaoId}},
+  "doacaoId": {{doacaoTesteId}}
+}
+
+### 6.2 Listar solicitações do usuário autenticado
+GET {{baseUrl}}/api/v1/solicitacoes
+Authorization: Bearer {{tokenInstituicao}}
+Accept: application/json
+
+### 6.3 Listar solicitações da instituição por ID
+GET {{baseUrl}}/api/v1/solicitacoes/instituicao/{{instituicaoId}}
+Authorization: Bearer {{tokenInstituicao}}
+Accept: application/json
+
+### 6.4 Consultar solicitação criada — atualize @solicitacaoTesteId
+GET {{baseUrl}}/api/v1/solicitacoes/{{solicitacaoTesteId}}
+Authorization: Bearer {{tokenInstituicao}}
+Accept: application/json
+
+### 6.5 Tentar criar solicitação duplicada — esperado: 409
+# Execute apenas após 6.1 criar a solicitação para a mesma doação/instituição.
+POST {{baseUrl}}/api/v1/solicitacoes
+Authorization: Bearer {{tokenInstituicao}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "instituicaoId": {{instituicaoId}},
+  "doacaoId": {{doacaoTesteId}}
+}
+
+### 6.6 Solicitação com instituição inexistente — esperado: 404
+POST {{baseUrl}}/api/v1/solicitacoes
+Authorization: Bearer {{tokenInstituicao}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "instituicaoId": 99999,
+  "doacaoId": {{doacaoTesteId}}
+}
+
+### 6.7 Solicitação com doação inexistente — esperado: 404
+POST {{baseUrl}}/api/v1/solicitacoes
+Authorization: Bearer {{tokenInstituicao}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "instituicaoId": {{instituicaoId}},
+  "doacaoId": 999999
+}
+
+### 6.8 Aceitar solicitação pendente — ALTERA solicitação e doação
+# Atualize @solicitacaoTesteId para uma solicitação PENDENTE.
+# Use token do doador que possui a doação.
+PATCH {{baseUrl}}/api/v1/solicitacoes/{{solicitacaoTesteId}}/aceitar
+Authorization: Bearer {{tokenDoador}}
+Accept: application/json
+
+### 6.9 Recusar outra solicitação pendente — ALTERA status
+# Use outro ID ainda PENDENTE; não reutilize a solicitação aceita.
+PATCH {{baseUrl}}/api/v1/solicitacoes/ID_DA_SOLICITACAO_PENDENTE/recusar
+Authorization: Bearer {{tokenDoador}}
+Accept: application/json
+
+### ============================================================
+### 7. SEGURANÇA
+### ============================================================
+
+### 7.1 Listar instituições sem token — esperado: 401
+GET {{baseUrl}}/api/v1/instituicoes
+Accept: application/json
+
+### 7.2 Listar solicitações sem token — esperado: 401
+GET {{baseUrl}}/api/v1/solicitacoes
+Accept: application/json
+
+### 7.3 Listar doações com token de instituição
+# Esperado: 403 se a rota for restrita a DOADOR.
+GET {{baseUrl}}/api/v1/doacoes
+Authorization: Bearer {{tokenInstituicao}}
+Accept: application/json
+
+### ============================================================
+### 8. OBSERVAÇÕES
+### ============================================================
+# - Execute uma requisição por vez.
+# - Faça os dois logins e atualize os tokens.
+# - Não use X-Usuario-Id: a autenticação usa Authorization: Bearer.
+# - Não repita cadastros sem trocar e-mails/CNPJ.
+# - Não aceite/recuse duas vezes a mesma solicitação.
+# - Evite excluir registros existentes; prefira dados criados para teste.
+# - Os códigos HTTP indicados são expectativas; confirme a resposta real.

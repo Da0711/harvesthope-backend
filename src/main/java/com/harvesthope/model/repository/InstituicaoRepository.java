@@ -1,8 +1,11 @@
 
 package com.harvesthope.model.repository;
 
-import com.harvesthope.model.entity.Instituicao;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.harvesthope.model.entity.Instituicao;
 
 public interface InstituicaoRepository
         extends JpaRepository<Instituicao, Long> {
@@ -10,4 +13,8 @@ public interface InstituicaoRepository
     boolean existsByCnpj(String cnpj);
 
     boolean existsByEmail(String email);
+
+    boolean existsByUsuarioId(Long usuarioId);
+
+    Optional<Instituicao> findByUsuario_Id(Long usuarioId);
 }

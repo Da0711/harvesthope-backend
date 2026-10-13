@@ -1,14 +1,12 @@
-
 package com.harvesthope.model.repository;
 
-import com.harvesthope.model.entity.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.Optional;
+import com.harvesthope.model.entity.Usuario;
 
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
-    Optional<Usuario> findByEmail(String email);
-
     boolean existsByEmail(String email);
+
+    Usuario findByEmail(String email);
 }

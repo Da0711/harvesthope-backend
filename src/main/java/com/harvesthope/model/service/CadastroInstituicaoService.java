@@ -1,11 +1,14 @@
 
 package com.harvesthope.model.service;
 
+import java.util.Locale;
+
 import com.harvesthope.model.dto.CadastroInstituicaoRequest;
 import com.harvesthope.model.entity.Instituicao;
 import com.harvesthope.model.entity.Usuario;
 import com.harvesthope.model.repository.InstituicaoRepository;
 import com.harvesthope.model.repository.UsuarioRepository;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +23,7 @@ public class CadastroInstituicaoService {
             UsuarioRepository usuarioRepository,
             InstituicaoRepository instituicaoRepository,
             UsuarioService usuarioService) {
+
         this.usuarioRepository = usuarioRepository;
         this.instituicaoRepository = instituicaoRepository;
         this.usuarioService = usuarioService;
@@ -28,62 +32,82 @@ public class CadastroInstituicaoService {
     @Transactional
     public Instituicao cadastrar(CadastroInstituicaoRequest request) {
 
-        if (request.getNomeResponsavel() == null
-                || request.getNomeResponsavel().isBlank()
-                || request.getEmailResponsavel() == null
-                || request.getEmailResponsavel().isBlank()
-                || request.getSenha() == null
-                || request.getSenha().isBlank()
-                || request.getNomeInstituicao() == null
-                || request.getNomeInstituicao().isBlank()
-                || request.getCnpj() == null
-                || request.getCnpj().isBlank()
-                || request.getEmailInstituicao() == null
-                || request.getEmailInstituicao().isBlank()) {
+        if (request == null) {
+            throw new IllegalArgumentException(
+                    "Informe os dados do cadastro."
+            );
+        }
+
+        if (vazio(request.getNomeResponsavel())
+                || vazio(request.getEmailResponsavel())
+                || vazio(request.getSenha())
+                || vazio(request.getNomeInstituicao())
+                || vazio(request.getCnpj())
+                || vazio(request.getEmailInstituicao())) {
+
             throw new IllegalArgumentException(
                     "Preencha os campos obrigatórios."
             );
         }
 
-        if (usuarioRepository.existsByEmail(
-                request.getEmailResponsavel().trim())) {
+        String nomeResponsavel = request.getNomeResponsavel().trim();
+        String emailResponsavel = normalizarEmail(
+                request.getEmailResponsavel()
+        );
+
+        String nomeInstituicao = request.getNomeInstituicao().trim();
+        String cnpj = request.getCnpj().trim();
+        String emailInstituicao = normalizarEmail(
+                request.getEmailInstituicao()
+        );
+
+        if (usuarioRepository.existsByEmail(emailResponsavel)) {
             throw new IllegalArgumentException(
                     "O e-mail do responsável já está cadastrado."
             );
         }
 
-        if (instituicaoRepository.existsByCnpj(
-                request.getCnpj().trim())) {
+        if (instituicaoRepository.existsByCnpj(cnpj)) {
             throw new IllegalArgumentException(
                     "O CNPJ já está cadastrado."
             );
         }
 
-        if (instituicaoRepository.existsByEmail(
-                request.getEmailInstituicao().trim())) {
+        if (instituicaoRepository.existsByEmail(emailInstituicao)) {
             throw new IllegalArgumentException(
                     "O e-mail da instituição já está cadastrado."
             );
         }
 
         Usuario usuario = new Usuario();
-        usuario.setNome(request.getNomeResponsavel().trim());
-        usuario.setEmail(request.getEmailResponsavel().trim());
+        usuario.setNome(nomeResponsavel);
+        usuario.setEmail(emailResponsavel);
         usuario.setSenha(request.getSenha());
         usuario.setTipoUsuario("INSTITUICAO");
 
+        // O UsuarioService valida os dados e aplica BCrypt à senha.
         Usuario usuarioSalvo = usuarioService.save(usuario);
 
         Instituicao instituicao = new Instituicao();
-        instituicao.setNome(request.getNomeInstituicao().trim());
-        instituicao.setCnpj(request.getCnpj().trim());
+        instituicao.setNome(nomeInstituicao);
+        instituicao.setCnpj(cnpj);
         instituicao.setDescricao(request.getDescricao());
         instituicao.setLocalizacao(request.getLocalizacao());
         instituicao.setTelefone(request.getTelefone());
-        instituicao.setEmail(request.getEmailInstituicao().trim());
+        instituicao.setEmail(emailInstituicao);
         instituicao.setSite(request.getSite());
+
+        // Mantém o vínculo entre a instituição e seu responsável.
         instituicao.setUsuario(usuarioSalvo);
 
         return instituicaoRepository.save(instituicao);
+    }
+
+    private boolean vazio(String valor) {
+        return valor == null || valor.isBlank();
+    }
+
+    private String normalizarEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 }
