@@ -48,6 +48,36 @@ public class InstituicaoService {
         return instituicaoRepository.findById(id);
     }
 
+    /**
+     * Busca a instituição vinculada ao usuário autenticado.
+     */
+    @Transactional(readOnly = true)
+    public Optional<Instituicao> buscarPorUsuarioId(Long usuarioId) {
+        if (usuarioId == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Usuário não autenticado."
+            );
+        }
+
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Usuário autenticado não encontrado."
+                ));
+
+        if (usuario.getTipoUsuario() == null
+                || !usuario.getTipoUsuario()
+                        .equalsIgnoreCase("INSTITUICAO")) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Apenas usuários de instituições podem consultar esta informação."
+            );
+        }
+
+        return instituicaoRepository.findByUsuario_Id(usuarioId);
+    }
+
     @Transactional
     public Instituicao atualizar(
             Long id,
@@ -79,8 +109,7 @@ public class InstituicaoService {
         existente.setEmail(dados.getEmail().trim());
         existente.setSite(dados.getSite());
 
-        // Não substitui o usuário vinculado à instituição.
-
+        // Preserva o usuário já vinculado à instituição.
         return instituicaoRepository.save(existente);
     }
 

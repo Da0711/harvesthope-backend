@@ -60,6 +60,32 @@ public class InstituicaoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    /**
+     * Retorna a instituição vinculada ao usuário autenticado.
+     * Requer JWT válido.
+     */
+    @GetMapping("/minha")
+    public ResponseEntity<?> buscarMinhaInstituicao(
+            Authentication authentication) {
+
+        Long usuarioId = obterUsuarioId(authentication);
+
+        return instituicaoService.buscarPorUsuarioId(usuarioId)
+                .map(instituicao -> ResponseEntity.ok(
+                        Map.of(
+                                "instituicaoId", instituicao.getId(),
+                                "nome", instituicao.getNome(),
+                                "cnpj", instituicao.getCnpj(),
+                                "email", instituicao.getEmail(),
+                                "localizacao",
+                                    instituicao.getLocalizacao() == null
+                                            ? ""
+                                            : instituicao.getLocalizacao()
+                        )
+                ))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping("/cadastro")
     public ResponseEntity<?> cadastrar(
             @RequestBody CadastroInstituicaoRequest request) {
