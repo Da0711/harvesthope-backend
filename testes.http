@@ -1,47 +1,53 @@
 ### HARVEST HOPE — TESTES DA API
-### Ferramenta: REST Client (VS Code)
-### Execute uma requisição por vez. Faça login e atualize os tokens antes das rotas protegidas.
-### Não compartilhe nem versione tokens JWT.
+### REST Client para VS Code
+### Seguro para versionar: não coloque tokens, senhas reais ou dados pessoais aqui.
+### Execute uma requisição por vez. Requisições CRIA/ALTERA modificam o banco.
 
-@baseUrl = http://localhost:8080
-@doadorId = 3
-@instituicaoId = 6
+@baseUrl = http://localhost:8081
+
+### IDs de exemplo — atualize conforme as respostas da API
+@doadorId = 1
+@instituicaoId = 1
 @idInexistente = 999999
-
-# Copie os tokens atuais das respostas de login:
-@tokenDoador = COLE_O_TOKEN_ATUAL_DO_DOADOR
-@tokenInstituicao = COLE_O_TOKEN_ATUAL_DA_INSTITUICAO
-
-# Preencha com os IDs retornados pelas requisições de criação:
 @doacaoTesteId = SUBSTITUA_PELO_ID_DA_DOACAO_CRIADA
 @solicitacaoTesteId = SUBSTITUA_PELO_ID_DA_SOLICITACAO_CRIADA
+
+### Credenciais locais: preencha apenas para testar; não faça commit com valores reais
+@emailDoador = EMAIL_DO_DOADOR_CADASTRADO
+@senhaDoador = SENHA_DO_DOADOR_CADASTRADO
+@emailResponsavel = EMAIL_DO_RESPONSAVEL_CADASTRADO
+@senhaResponsavel = SENHA_DO_RESPONSAVEL_CADASTRADO
+
+### Tokens locais: cole após o login; nunca versione tokens JWT
+@tokenDoador = COLE_TOKEN_DO_DOADOR_AQUI
+@tokenInstituicao = COLE_TOKEN_DA_INSTITUICAO_AQUI
 
 ### ============================================================
 ### 1. AUTENTICAÇÃO
 ### ============================================================
 
 ### 1.1 Login do doador — esperado: 200
-# Copie o campo token da resposta para @tokenDoador.
+# Copie o campo token da resposta para @tokenDoador apenas localmente.
 # @name loginDoador
 POST {{baseUrl}}/api/auth/signin
 Content-Type: application/json
 Accept: application/json
 
 {
-  "email": "teste@harvesthope.com",
-  "senha": "123456"
+  "email": "{{emailDoador}}",
+  "senha": "{{senhaDoador}}"
 }
 
 ### 1.2 Login da instituição — esperado: 200
-# Copie o campo token da resposta para @tokenInstituicao.
+# Copie o campo token da resposta para @tokenInstituicao apenas localmente.
 # @name loginInstituicao
 POST {{baseUrl}}/api/auth/signin
 Content-Type: application/json
 Accept: application/json
 
 {
-  "email": "teste.minimo@harvesthope.com",
-  "senha": "TesteHH2026!"
+  "email": "{{emailResponsavel}}",
+  "senha": "{{senhaResponsavel}}"
 }
 
 ### 1.3 Login com senha incorreta — esperado: 401
@@ -50,15 +56,15 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "email": "teste@harvesthope.com",
-  "senha": "senha-incorreta"
+  "email": "{{emailDoador}}",
+  "senha": "SENHA_INTENCIONALMENTE_INCORRETA"
 }
 
 ### ============================================================
 ### 2. USUÁRIOS
 ### ============================================================
 
-### 2.1 Consultar usuário existente — token do doador
+### 2.1 Consultar o próprio usuário — esperado: 200
 GET {{baseUrl}}/api/v1/usuarios/{{doadorId}}
 Authorization: Bearer {{tokenDoador}}
 Accept: application/json
@@ -68,20 +74,20 @@ GET {{baseUrl}}/api/v1/usuarios
 Authorization: Bearer {{tokenDoador}}
 Accept: application/json
 
-### 2.3 Consultar usuário inexistente — esperado: 404 se autorizado
+### 2.3 Consultar usuário inexistente — pode retornar 403 se a autorização bloquear antes
 GET {{baseUrl}}/api/v1/usuarios/{{idInexistente}}
 Authorization: Bearer {{tokenDoador}}
 Accept: application/json
 
-### 2.4 Cadastrar doador — CRIA registro; troque o e-mail em cada execução
+### 2.4 Cadastrar doador — CRIA registro; use e-mail único em cada execução
 POST {{baseUrl}}/api/v1/usuarios
 Content-Type: application/json
 Accept: application/json
 
 {
-  "nome": "Doador HTTP",
-  "email": "doador.http.20261012@harvesthope.com",
-  "senha": "SenhaTeste123!",
+  "nome": "Doador HTTP Teste",
+  "email": "TROQUE_POR_EMAIL_UNICO@example.invalid",
+  "senha": "SENHA_LOCAL_DE_TESTE",
   "tipoUsuario": "DOADOR"
 }
 
@@ -89,12 +95,12 @@ Accept: application/json
 ### 3. INSTITUIÇÕES
 ### ============================================================
 
-### 3.1 Listar instituições — token da instituição
+### 3.1 Listar instituições — esperado: 200 com token de instituição
 GET {{baseUrl}}/api/v1/instituicoes
 Authorization: Bearer {{tokenInstituicao}}
 Accept: application/json
 
-### 3.2 Consultar instituição conhecida — ID 6
+### 3.2 Consultar instituição conhecida — atualize @instituicaoId
 GET {{baseUrl}}/api/v1/instituicoes/{{instituicaoId}}
 Authorization: Bearer {{tokenInstituicao}}
 Accept: application/json
@@ -104,29 +110,26 @@ GET {{baseUrl}}/api/v1/instituicoes/{{idInexistente}}
 Authorization: Bearer {{tokenInstituicao}}
 Accept: application/json
 
-### 3.4 Cadastro integrado — CRIA usuário e instituição
-# Execute apenas se quiser criar registros novos.
-# Troque e-mails e CNPJ a cada execução.
+### 3.4 Cadastro integrado — CRIA usuário e instituição; use dados fictícios únicos
 POST {{baseUrl}}/api/v1/instituicoes/cadastro
 Content-Type: application/json
 Accept: application/json
 
 {
-  "nomeResponsavel": "Responsável HTTP",
-  "emailResponsavel": "responsavel.http.20261012@harvesthope.com",
-  "senha": "TesteHH2026!",
+  "nomeResponsavel": "Responsável HTTP Teste",
+  "emailResponsavel": "TROQUE_POR_EMAIL_UNICO@example.invalid",
+  "senha": "SENHA_LOCAL_DE_TESTE",
   "nomeInstituicao": "Instituição HTTP Teste",
-  "cnpj": "98765432000110",
-  "emailInstituicao": "instituicao.http.20261012@harvesthope.com",
-  "descricao": "Instituição criada para testes da API.",
-  "localizacao": "Barueri - SP",
-  "telefone": "(11) 98888-7777",
-  "site": "https://exemplo.com"
+  "cnpj": "00000000000000",
+  "emailInstituicao": "TROQUE_POR_EMAIL_UNICO@example.invalid",
+  "descricao": "Instituição fictícia para testes da API.",
+  "localizacao": "Cidade - UF",
+  "telefone": "(00) 00000-0000",
+  "site": "https://example.invalid"
 }
 
 ### ============================================================
-### 4. DOAÇÕES
-### Use token de DOADOR nas operações de doação.
+### 4. DOAÇÕES — use token de DOADOR
 ### ============================================================
 
 ### 4.1 Listar doações — esperado: 200
@@ -134,8 +137,8 @@ GET {{baseUrl}}/api/v1/doacoes
 Authorization: Bearer {{tokenDoador}}
 Accept: application/json
 
-### 4.2 Consultar doação existente — exemplo ID 9; confirme se existe
-GET {{baseUrl}}/api/v1/doacoes/9
+### 4.2 Consultar doação existente — atualize o ID
+GET {{baseUrl}}/api/v1/doacoes/{{doacaoTesteId}}
 Authorization: Bearer {{tokenDoador}}
 Accept: application/json
 
@@ -147,21 +150,15 @@ Accept: application/json
 
 {
   "nomeAlimento": "Doação HTTP - Arroz",
-  "descricao": "Doação criada para testar solicitações.",
+  "descricao": "Doação fictícia criada para testar a API.",
   "quantidade": 5,
   "unidade": "kg",
   "dataValidade": "2026-12-31",
-  "localRetirada": "Barueri - SP",
+  "localRetirada": "Cidade - UF",
   "foto": ""
 }
 
-### 4.4 Consultar doação criada — atualize @doacaoTesteId antes
-GET {{baseUrl}}/api/v1/doacoes/{{doacaoTesteId}}
-Authorization: Bearer {{tokenDoador}}
-Accept: application/json
-
-### 4.5 Atualizar doação de teste — ALTERA registro
-# Use somente doação disponível e pertencente ao doador.
+### 4.4 Atualizar doação de teste — ALTERA registro; use doação disponível do doador
 PUT {{baseUrl}}/api/v1/doacoes/{{doacaoTesteId}}
 Authorization: Bearer {{tokenDoador}}
 Content-Type: application/json
@@ -173,11 +170,11 @@ Accept: application/json
   "quantidade": 4,
   "unidade": "kg",
   "dataValidade": "2026-12-31",
-  "localRetirada": "Barueri - SP",
+  "localRetirada": "Cidade - UF",
   "foto": ""
 }
 
-### 4.6 Atualizar doação inexistente — esperado: 404
+### 4.5 Atualizar doação inexistente — esperado: 404
 PUT {{baseUrl}}/api/v1/doacoes/{{idInexistente}}
 Authorization: Bearer {{tokenDoador}}
 Content-Type: application/json
@@ -189,25 +186,24 @@ Accept: application/json
   "quantidade": 1,
   "unidade": "kg",
   "dataValidade": "2026-12-31",
-  "localRetirada": "Barueri - SP",
+  "localRetirada": "Cidade - UF",
   "foto": ""
 }
 
-### 4.7 Excluir doação inexistente — esperado: 404
+### 4.6 Excluir doação inexistente — esperado: 404
 DELETE {{baseUrl}}/api/v1/doacoes/{{idInexistente}}
 Authorization: Bearer {{tokenDoador}}
 Accept: application/json
 
-### 4.8 Listar doações sem token — esperado: 401
+### 4.7 Listar doações sem token — esperado: 401
 GET {{baseUrl}}/api/v1/doacoes
 Accept: application/json
 
 ### ============================================================
-### 5. VALIDAÇÕES DE DOAÇÕES
-### Esperado: 400 nos casos de dados inválidos.
+### 5. VALIDAÇÕES DE DOAÇÕES — esperado: 400 se regras implementadas
 ### ============================================================
 
-### 5.1 Cadastro sem nome do alimento — esperado: 400
+### 5.1 Cadastro sem nome do alimento
 POST {{baseUrl}}/api/v1/doacoes
 Authorization: Bearer {{tokenDoador}}
 Content-Type: application/json
@@ -220,7 +216,7 @@ Accept: application/json
   "descricao": "Teste sem nome do alimento."
 }
 
-### 5.2 Quantidade zero — esperado: 400
+### 5.2 Quantidade zero
 POST {{baseUrl}}/api/v1/doacoes
 Authorization: Bearer {{tokenDoador}}
 Content-Type: application/json
@@ -234,7 +230,7 @@ Accept: application/json
   "descricao": "Teste de quantidade inválida."
 }
 
-### 5.3 Formato de data inválido — esperado: 400
+### 5.3 Formato de data inválido — esperado: 400 se validado pela API
 POST {{baseUrl}}/api/v1/doacoes
 Authorization: Bearer {{tokenDoador}}
 Content-Type: application/json
@@ -248,7 +244,7 @@ Accept: application/json
   "descricao": "Teste de formato de data inválido."
 }
 
-### 5.4 Validade no passado — esperado: 400
+### 5.4 Validade no passado — esperado: 400 se regra implementada
 POST {{baseUrl}}/api/v1/doacoes
 Authorization: Bearer {{tokenDoador}}
 Content-Type: application/json
@@ -262,32 +258,11 @@ Accept: application/json
   "descricao": "Teste de data vencida."
 }
 
-### 5.5 Status inválido na atualização — esperado: 400
-# Use uma doação de teste disponível e pertencente ao doador.
-PUT {{baseUrl}}/api/v1/doacoes/{{doacaoTesteId}}
-Authorization: Bearer {{tokenDoador}}
-Content-Type: application/json
-Accept: application/json
-
-{
-  "nomeAlimento": "Doação HTTP - Teste Status",
-  "descricao": "Teste de status inválido.",
-  "quantidade": 2,
-  "unidade": "kg",
-  "dataValidade": "2026-12-31",
-  "localRetirada": "Barueri - SP",
-  "foto": "",
-  "status": "ENTREGUE"
-}
-
 ### ============================================================
-### 6. SOLICITAÇÕES
-### Criar/listar: token da instituição.
-### Aceitar/recusar: token do doador proprietário da doação.
-### Use uma doação disponível e sem solicitação anterior.
+### 6. SOLICITAÇÕES — criar/listar: instituição; aceitar/recusar: doador dono
 ### ============================================================
 
-### 6.1 Criar solicitação — CRIA registro
+### 6.1 Criar solicitação — CRIA registro; requer instituição e doação existentes
 POST {{baseUrl}}/api/v1/solicitacoes
 Authorization: Bearer {{tokenInstituicao}}
 Content-Type: application/json
@@ -313,8 +288,7 @@ GET {{baseUrl}}/api/v1/solicitacoes/{{solicitacaoTesteId}}
 Authorization: Bearer {{tokenInstituicao}}
 Accept: application/json
 
-### 6.5 Tentar criar solicitação duplicada — esperado: 409
-# Execute apenas após 6.1 criar a solicitação para a mesma doação/instituição.
+### 6.5 Tentar criar solicitação duplicada — esperado: 409 se regra implementada
 POST {{baseUrl}}/api/v1/solicitacoes
 Authorization: Bearer {{tokenInstituicao}}
 Content-Type: application/json
@@ -325,18 +299,18 @@ Accept: application/json
   "doacaoId": {{doacaoTesteId}}
 }
 
-### 6.6 Solicitação com instituição inexistente — esperado: 404
+### 6.6 Solicitação com instituição inexistente — esperado: 404 se autorizado
 POST {{baseUrl}}/api/v1/solicitacoes
 Authorization: Bearer {{tokenInstituicao}}
 Content-Type: application/json
 Accept: application/json
 
 {
-  "instituicaoId": 99999,
+  "instituicaoId": 999999,
   "doacaoId": {{doacaoTesteId}}
 }
 
-### 6.7 Solicitação com doação inexistente — esperado: 404
+### 6.7 Solicitação com doação inexistente — esperado: 404 se autorizado
 POST {{baseUrl}}/api/v1/solicitacoes
 Authorization: Bearer {{tokenInstituicao}}
 Content-Type: application/json
@@ -348,14 +322,11 @@ Accept: application/json
 }
 
 ### 6.8 Aceitar solicitação pendente — ALTERA solicitação e doação
-# Atualize @solicitacaoTesteId para uma solicitação PENDENTE.
-# Use token do doador que possui a doação.
 PATCH {{baseUrl}}/api/v1/solicitacoes/{{solicitacaoTesteId}}/aceitar
 Authorization: Bearer {{tokenDoador}}
 Accept: application/json
 
-### 6.9 Recusar outra solicitação pendente — ALTERA status
-# Use outro ID ainda PENDENTE; não reutilize a solicitação aceita.
+### 6.9 Recusar outra solicitação pendente — ALTERA status; use outro ID pendente
 PATCH {{baseUrl}}/api/v1/solicitacoes/ID_DA_SOLICITACAO_PENDENTE/recusar
 Authorization: Bearer {{tokenDoador}}
 Accept: application/json
@@ -372,8 +343,7 @@ Accept: application/json
 GET {{baseUrl}}/api/v1/solicitacoes
 Accept: application/json
 
-### 7.3 Listar doações com token de instituição
-# Esperado: 403 se a rota for restrita a DOADOR.
+### 7.3 Listar doações com token de instituição — esperado: 403 se restrito a DOADOR
 GET {{baseUrl}}/api/v1/doacoes
 Authorization: Bearer {{tokenInstituicao}}
 Accept: application/json
@@ -382,9 +352,10 @@ Accept: application/json
 ### 8. OBSERVAÇÕES
 ### ============================================================
 # - Execute uma requisição por vez.
-# - Faça os dois logins e atualize os tokens.
-# - Não use X-Usuario-Id: a autenticação usa Authorization: Bearer.
-# - Não repita cadastros sem trocar e-mails/CNPJ.
-# - Não aceite/recuse duas vezes a mesma solicitação.
-# - Evite excluir registros existentes; prefira dados criados para teste.
+# - Preencha credenciais e tokens somente no arquivo local.
+# - Antes do commit, confira que não há JWTs, senhas reais ou dados pessoais.
+# - Nunca versione tokens JWT.
+# - Troque e-mails/CNPJ de teste se a API exigir valores únicos.
+# - Atualize IDs com os valores retornados pela API.
+# - Evite excluir ou alterar registros reais; use dados de teste.
 # - Os códigos HTTP indicados são expectativas; confirme a resposta real.
