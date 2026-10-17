@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Column;
+import jakarta.persistence.Lob;
 
 @Entity
 @Table(name = "doacao")
@@ -28,11 +29,14 @@ public class Doacao {
 
     private String unidade;
 
+    private String categoria;
+
     @Column(name = "data_validade")
     private String dataValidade;
 
     private String descricao;
 
+    @Lob
     private String foto;
 
     private String status;
@@ -72,6 +76,9 @@ public class Doacao {
     public String getUnidade() {
         return unidade;
     }
+
+    public String getCategoria() { return categoria; }
+    public void setCategoria(String categoria) { this.categoria = categoria; }
 
     public void setUnidade(String unidade) {
         this.unidade = unidade;

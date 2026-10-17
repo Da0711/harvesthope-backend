@@ -96,6 +96,9 @@ public class DoacaoService {
         doacao.setNomeAlimento(dados.getNomeAlimento());
         doacao.setQuantidade(dados.getQuantidade());
         doacao.setUnidade(dados.getUnidade());
+        if (dados.getCategoria() != null) {
+            doacao.setCategoria(dados.getCategoria());
+        }
         doacao.setDataValidade(dados.getDataValidade());
         doacao.setDescricao(dados.getDescricao());
         doacao.setFoto(dados.getFoto());

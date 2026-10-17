@@ -94,6 +94,19 @@ public class SolicitacaoController {
                         instituicaoId, usuarioId));
     }
 
+    @PatchMapping("/{id}/concluir")
+    public ResponseEntity<Solicitacao> concluir(@PathVariable Long id, Authentication authentication) {
+        Long usuarioId = obterUsuarioId(authentication);
+        return ResponseEntity.ok(solicitacaoService.concluir(id, usuarioId));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> cancelar(@PathVariable Long id, Authentication authentication) {
+        Long usuarioId = obterUsuarioId(authentication);
+        solicitacaoService.cancelar(id, usuarioId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PatchMapping("/{id}/aceitar")
     public ResponseEntity<Solicitacao> aceitar(
             @PathVariable Long id,

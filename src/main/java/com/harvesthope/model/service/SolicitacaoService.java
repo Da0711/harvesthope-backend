@@ -26,17 +26,20 @@ public class SolicitacaoService {
     private final InstituicaoRepository instituicaoRepository;
     private final DoacaoRepository doacaoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final NotificacaoService notificacaoService;
 
     public SolicitacaoService(
             SolicitacaoRepository solicitacaoRepository,
             InstituicaoRepository instituicaoRepository,
             DoacaoRepository doacaoRepository,
-            UsuarioRepository usuarioRepository) {
+            UsuarioRepository usuarioRepository,
+            NotificacaoService notificacaoService) {
 
         this.solicitacaoRepository = solicitacaoRepository;
         this.instituicaoRepository = instituicaoRepository;
         this.doacaoRepository = doacaoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.notificacaoService = notificacaoService;
     }
 
     @Transactional
@@ -102,7 +105,9 @@ public class SolicitacaoService {
         solicitacao.setDoacao(doacao);
         solicitacao.setStatus("PENDENTE");
 
-        return solicitacaoRepository.save(solicitacao);
+        Solicitacao salva = solicitacaoRepository.save(solicitacao);
+        notificacaoService.criar(doacao.getDoador().getId(), "Nova solicitação de doação", "Uma instituição solicitou " + doacao.getNomeAlimento() + ".", "SOLICITACAO", salva.getId());
+        return salva;
     }
 
     @Transactional
@@ -136,7 +141,9 @@ public class SolicitacaoService {
         solicitacao.setStatus("ACEITA");
 
         doacaoRepository.save(doacao);
-        return solicitacaoRepository.save(solicitacao);
+        Solicitacao salva = solicitacaoRepository.save(solicitacao);
+        notificacaoService.criar(solicitacao.getInstituicao().getUsuario().getId(), "Solicitação aceita", "Sua solicitação para " + doacao.getNomeAlimento() + " foi aceita.", "SOLICITACAO", salva.getId());
+        return salva;
     }
 
     @Transactional
@@ -150,8 +157,44 @@ public class SolicitacaoService {
         validarPendente(solicitacao);
 
         solicitacao.setStatus("RECUSADA");
+        Solicitacao salva = solicitacaoRepository.save(solicitacao);
+        notificacaoService.criar(solicitacao.getInstituicao().getUsuario().getId(), "Solicitação recusada", "Sua solicitação para " + solicitacao.getDoacao().getNomeAlimento() + " foi recusada.", "SOLICITACAO", salva.getId());
+        return salva;
+    }
 
-        return solicitacaoRepository.save(solicitacao);
+    @Transactional
+    public Solicitacao concluir(Long solicitacaoId, Long usuarioId) {
+        Solicitacao solicitacao = buscarSolicitacaoObrigatoria(solicitacaoId);
+        Usuario usuario = validarDoador(usuarioId);
+        validarProprietario(solicitacao, usuario);
+        if (!"ACEITA".equalsIgnoreCase(solicitacao.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Somente solicitações aceitas podem ser concluídas.");
+        }
+        solicitacao.setStatus("CONCLUIDA");
+        Doacao doacao = solicitacao.getDoacao();
+        doacao.setStatus("Concluída");
+        doacaoRepository.save(doacao);
+        Solicitacao salva = solicitacaoRepository.save(solicitacao);
+        if (solicitacao.getInstituicao() != null && solicitacao.getInstituicao().getUsuario() != null) {
+            notificacaoService.criar(solicitacao.getInstituicao().getUsuario().getId(), "Doação concluída", "A doação de " + doacao.getNomeAlimento() + " foi marcada como concluída.", "SOLICITACAO", salva.getId());
+        }
+        return salva;
+    }
+
+    @Transactional
+    public void cancelar(Long solicitacaoId, Long usuarioId) {
+        Usuario usuario = buscarUsuario(usuarioId);
+        validarTipo(usuario, "INSTITUICAO");
+        Instituicao instituicao = buscarInstituicaoDoUsuario(usuarioId);
+        Solicitacao solicitacao = solicitacaoRepository.findByIdAndInstituicao_Id(solicitacaoId, instituicao.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Solicitação não encontrada."));
+        if (!"PENDENTE".equalsIgnoreCase(solicitacao.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Somente solicitações pendentes podem ser canceladas.");
+        }
+        solicitacaoRepository.delete(solicitacao);
+        if (solicitacao.getDoacao() != null && solicitacao.getDoacao().getDoador() != null) {
+            notificacaoService.criar(solicitacao.getDoacao().getDoador().getId(), "Solicitação cancelada", "Uma instituição cancelou a solicitação para " + solicitacao.getDoacao().getNomeAlimento() + ".", "SOLICITACAO", solicitacaoId);
+        }
     }
 
     @Transactional(readOnly = true)

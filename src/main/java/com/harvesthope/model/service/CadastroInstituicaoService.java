@@ -90,6 +90,7 @@ public class CadastroInstituicaoService {
 
         Instituicao instituicao = new Instituicao();
         instituicao.setNome(nomeInstituicao);
+        instituicao.setCategoria(request.getCategoria());
         instituicao.setCnpj(cnpj);
         instituicao.setDescricao(request.getDescricao());
         instituicao.setLocalizacao(request.getLocalizacao());

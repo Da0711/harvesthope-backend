@@ -102,6 +102,7 @@ public class InstituicaoService {
         validarDuplicidade(dados, id);
 
         existente.setNome(dados.getNome().trim());
+        existente.setCategoria(dados.getCategoria());
         existente.setCnpj(dados.getCnpj().trim());
         existente.setDescricao(dados.getDescricao());
         existente.setLocalizacao(dados.getLocalizacao());

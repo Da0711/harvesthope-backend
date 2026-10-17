@@ -60,6 +60,10 @@ public class SecurityConfig {
                     HttpMethod.POST, "/api/v1/instituicoes/cadastro"
                 ).permitAll()
 
+                // Consulta pública dos catálogos de instituições e doações.
+                .requestMatchers(HttpMethod.GET, "/api/v1/instituicoes", "/api/v1/instituicoes/{id}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/doacoes", "/api/v1/doacoes/{id}").permitAll()
+
                 // Todas as demais rotas exigem autenticação.
                 .anyRequest().authenticated()
             )

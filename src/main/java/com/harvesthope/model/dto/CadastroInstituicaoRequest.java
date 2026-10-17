@@ -7,6 +7,7 @@ public class CadastroInstituicaoRequest {
     private String emailResponsavel;
     private String senha;
     private String nomeInstituicao;
+    private String categoria;
     private String cnpj;
     private String descricao;
     private String localizacao;
@@ -37,6 +38,9 @@ public class CadastroInstituicaoRequest {
     public void setSenha(String senha) {
         this.senha = senha;
     }
+
+    public String getCategoria() { return categoria; }
+    public void setCategoria(String categoria) { this.categoria = categoria; }
 
     public String getNomeInstituicao() {
         return nomeInstituicao;
