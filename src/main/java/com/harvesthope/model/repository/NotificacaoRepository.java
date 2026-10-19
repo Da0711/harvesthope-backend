@@ -2,7 +2,9 @@ package com.harvesthope.model.repository;
 
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+
 import com.harvesthope.model.entity.Notificacao;
 
 public interface NotificacaoRepository extends JpaRepository<Notificacao, Long> {

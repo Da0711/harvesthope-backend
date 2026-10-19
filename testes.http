@@ -7,18 +7,18 @@
 ### ============================================================
 
 @doadorId = 1
-@instituicaoId = SUBSTITUA_PELO_ID_DA_INSTITUICAO
+@instituicaoId = 2
 @idInexistente = 999999
-@doacaoTesteId = SUBSTITUA_PELO_ID_DA_DOACAO_CRIADA
+@doacaoTesteId = 2
 @solicitacaoTesteId = SUBSTITUA_PELO_ID_DA_SOLICITACAO_CRIADA
 
 @emailDoador = EMAIL_DO_DOADOR_CADASTRADO
 @senhaDoador = SENHA_DO_DOADOR_CADASTRADO
-@emailResponsavel = EMAIL_DO_RESPONSAVEL_CADASTRADO
-@senhaResponsavel = SENHA_DO_RESPONSAVEL_CADASTRADO
+@emailResponsavel = responsavel.teste2.20261017@example.invalid
+@senhaResponsavel = TesteLocal123!
 
-@tokenDoador = COLE_TOKEN_DO_DOADOR_AQUI
-@tokenInstituicao = COLE_TOKEN_DA_INSTITUICAO_AQUI
+@tokenDoador = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJkb2Fkb3IuaHR0cC4yMDI2MTAxNEBoYXJ2ZXN0aG9wZS5jb20iLCJ0aXBvVXN1YXJpbyI6IkRPQURPUiIsImlhdCI6MTc5MjI1Nzg4NSwiZXhwIjoxNzkyMjYxNDg1fQ.RFRj7vk4kX5WAIIg23jY-uEfQT0ucUphzUEEDnI2CQ0
+@tokenInstituicao = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwiZW1haWwiOiJyZXNwb25zYXZlbC50ZXN0ZTIuMjAyNjEwMTdAZXhhbXBsZS5pbnZhbGlkIiwidGlwb1VzdWFyaW8iOiJJTlNUSVRVSUNBTyIsImlhdCI6MTc5MjI2MDYwMiwiZXhwIjoxNzkyMjY0MjAyfQ.G2SXHMckXq5pKgBSo9FDGXuvzuuEVdG03bv_OZOKygg
 
 ### ============================================================
 ### 1. AUTENTICAÇÃO
@@ -32,8 +32,8 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "email": "{{emailDoador}}",
-  "senha": "{{senhaDoador}}"
+  "email": "doador.http.20261014@harvesthope.com",
+  "senha": "SenhaTeste123!"
 }
 
 ###
@@ -134,15 +134,15 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "nomeResponsavel": "Responsável HTTP Teste",
-  "emailResponsavel": "TROQUE_POR_EMAIL_UNICO@example.invalid",
-  "senha": "SENHA_LOCAL_DE_TESTE",
-  "nomeInstituicao": "Instituição HTTP Teste",
-  "cnpj": "00000000000000",
-  "emailInstituicao": "TROQUE_POR_EMAIL_UNICO@example.invalid",
-  "descricao": "Instituição fictícia para testes da API.",
-  "localizacao": "Cidade - UF",
-  "telefone": "(00) 00000-0000",
+  "nomeResponsavel": "Responsavel Teste 2",
+  "emailResponsavel": "responsavel.teste2.20261017@example.invalid",
+  "senha": "TesteLocal123!",
+  "nomeInstituicao": "Instituicao Teste 2",
+  "cnpj": "00000000000001",
+  "emailInstituicao": "instituicao.teste2.20261017@example.invalid",
+  "descricao": "Instituicao ficticia para testar solicitacoes e notificacoes.",
+  "localizacao": "Barueri - SP",
+  "telefone": "(11) 90000-0002",
   "site": "https://example.invalid"
 }
 
@@ -174,12 +174,12 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "nomeAlimento": "Doação HTTP - Arroz",
-  "descricao": "Doação fictícia criada para testar a API.",
+  "nomeAlimento": "Arroz - Teste Harvest Hope",
+  "descricao": "Doação de teste para validar a integração com o banco.",
   "quantidade": 5,
   "unidade": "kg",
   "dataValidade": "2026-12-31",
-  "localRetirada": "Cidade - UF",
+  "localRetirada": "Barueri - SP",
   "foto": ""
 }
 
@@ -230,6 +230,7 @@ Accept: application/json
 
 ### 4.7 Listar doações sem token — esperado: 401
 GET {{baseUrl}}/api/v1/doacoes
+Authorization: Bearer {{tokenDoador}}
 Accept: application/json
 
 ###
@@ -428,3 +429,64 @@ Accept: application/json
 ### - Evite alterar ou excluir registros reais; use dados de teste.
 ### - Os códigos HTTP são expectativas: confirme a resposta real.
 ### - O arquivo usa a porta 8081; altere @baseUrl se o backend estiver em outra porta.
+
+
+### ============================================================
+### 9. NOTIFICAÇÕES
+### Use o token do usuário que recebeu a notificação.
+### ============================================================
+
+### 9.1 Listar notificações do usuário — esperado: 200
+GET {{baseUrl}}/api/v1/notificacoes
+Authorization: Bearer {{tokenDoador}}
+Accept: application/json
+
+###
+
+### 9.2 Marcar notificação como lida — ALTERA registro
+PATCH {{baseUrl}}/api/v1/notificacoes/1/lida
+Authorization: Bearer {{tokenDoador}}
+Accept: application/json
+
+###
+
+### 9.3 Excluir notificação — EXCLUI registro
+DELETE {{baseUrl}}/api/v1/notificacoes/1
+Authorization: Bearer {{tokenDoador}}
+Accept: application/json
+
+###
+
+### 9.4 Excluir todas as notificações — EXCLUI registros
+DELETE {{baseUrl}}/api/v1/notificacoes
+Authorization: Bearer {{tokenDoador}}
+Accept: application/json
+
+###
+
+### 9.5 Listar notificações sem autenticação — esperado: 401
+GET {{baseUrl}}/api/v1/notificacoes
+Accept: application/json
+
+### Teste de isolamento — instituição tentando marcar notificação do doador
+PATCH {{baseUrl}}/api/v1/notificacoes/2/lida
+Authorization: Bearer {{tokenInstituicao}}
+Accept: application/json
+
+PATCH {{baseUrl}}/api/v1/notificacoes/2
+Authorization: Bearer {{tokenInstituicao}}
+Accept: application/json
+
+POST http://localhost:8081/api/v1/doacoes
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwiZW1haWwiOiJyZXNwb25zYXZlbC50ZXN0ZTIuMjAyNjEwMTdAZXhhbXBsZS5pbnZhbGlkIiwidGlwb1VzdWFyaW8iOiJJTlNUSVRVSUNBTyIsImlhdCI6MTc5MjI2NTI5MywiZXhwIjoxNzkyMjY4ODkzfQ.X_RqTWPY9-ZcgQLE9JyARR9gLGfOPLCAdAezMgsyhJ8
+Content-Type: application/json
+
+{
+  "nomeAlimento": "Teste de bloqueio",
+  "descricao": "Teste de permissão da instituição.",
+  "quantidade": 10,
+  "unidade": "kg",
+  "dataValidade": "2026-12-31",
+  "localRetirada": "Barueri - SP",
+  "foto": ""
+}
