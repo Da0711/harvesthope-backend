@@ -8,22 +8,48 @@ public class LoginResponse {
     private String email;
     private String token;
     private String tipoUsuario;
+    private Long instituicaoId;
 
     public LoginResponse() {
     }
 
     public LoginResponse(Long id, String nome, String email) {
+        this(id, nome, email, null, null, null);
+    }
+
+    public LoginResponse(
+            Long id,
+            String nome,
+            String email,
+            String token
+    ) {
+        this(id, nome, email, token, null, null);
+    }
+
+    public LoginResponse(
+            Long id,
+            String nome,
+            String email,
+            String token,
+            String tipoUsuario
+    ) {
+        this(id, nome, email, token, tipoUsuario, null);
+    }
+
+    public LoginResponse(
+            Long id,
+            String nome,
+            String email,
+            String token,
+            String tipoUsuario,
+            Long instituicaoId
+    ) {
         this.id = id;
         this.nome = nome;
         this.email = email;
-    }
-
-    public LoginResponse(Long id, String nome, String email, String token) {
-        this(id, nome, email, token, null);
-    }
-
-    public LoginResponse(Long id, String nome, String email, String token, String tipoUsuario) {
-        this.id = id; this.nome = nome; this.email = email; this.token = token; this.tipoUsuario = tipoUsuario;
+        this.token = token;
+        this.tipoUsuario = tipoUsuario;
+        this.instituicaoId = instituicaoId;
     }
 
     public Long getId() {
@@ -54,7 +80,23 @@ public class LoginResponse {
         return token;
     }
 
-    public void setToken(String token) { this.token = token; }
-    public String getTipoUsuario() { return tipoUsuario; }
-    public void setTipoUsuario(String tipoUsuario) { this.tipoUsuario = tipoUsuario; }
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public String getTipoUsuario() {
+        return tipoUsuario;
+    }
+
+    public void setTipoUsuario(String tipoUsuario) {
+        this.tipoUsuario = tipoUsuario;
+    }
+
+    public Long getInstituicaoId() {
+        return instituicaoId;
+    }
+
+    public void setInstituicaoId(Long instituicaoId) {
+        this.instituicaoId = instituicaoId;
+    }
 }

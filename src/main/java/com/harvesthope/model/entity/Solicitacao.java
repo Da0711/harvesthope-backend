@@ -1,8 +1,7 @@
+
 package com.harvesthope.model.entity;
 
 import java.time.LocalDateTime;
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -36,6 +35,15 @@ public class Solicitacao {
 
     @Column(name = "data_solicitacao", nullable = false)
     private LocalDateTime dataSolicitacao;
+
+    @Column(name = "data_retirada")
+    private LocalDateTime dataRetirada;
+
+    @Column(name = "local_retirada", length = 300)
+    private String localRetirada;
+
+    @Column(name = "data_confirmacao_recebimento")
+    private LocalDateTime dataConfirmacaoRecebimento;
 
     @PrePersist
     protected void aoCriar() {
@@ -86,5 +94,30 @@ public class Solicitacao {
 
     public void setDataSolicitacao(LocalDateTime dataSolicitacao) {
         this.dataSolicitacao = dataSolicitacao;
+    }
+
+    public LocalDateTime getDataRetirada() {
+        return dataRetirada;
+    }
+
+    public void setDataRetirada(LocalDateTime dataRetirada) {
+        this.dataRetirada = dataRetirada;
+    }
+
+    public String getLocalRetirada() {
+        return localRetirada;
+    }
+
+    public void setLocalRetirada(String localRetirada) {
+        this.localRetirada = localRetirada;
+    }
+
+    public LocalDateTime getDataConfirmacaoRecebimento() {
+        return dataConfirmacaoRecebimento;
+    }
+
+    public void setDataConfirmacaoRecebimento(
+            LocalDateTime dataConfirmacaoRecebimento) {
+        this.dataConfirmacaoRecebimento = dataConfirmacaoRecebimento;
     }
 }

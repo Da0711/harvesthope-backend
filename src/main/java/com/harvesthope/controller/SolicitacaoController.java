@@ -6,9 +6,17 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.harvesthope.model.dto.AgendamentoRetiradaRequest;
 import com.harvesthope.model.dto.SolicitarDoacaoRequest;
 import com.harvesthope.model.entity.Solicitacao;
 import com.harvesthope.model.service.SolicitacaoService;
@@ -24,36 +32,15 @@ public class SolicitacaoController {
         this.solicitacaoService = solicitacaoService;
     }
 
-    private Long obterUsuarioId(Authentication authentication) {
-
-        if (authentication == null
-                || authentication.getName() == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED,
-                    "Usuário não autenticado.");
-        }
-
-        try {
-            return Long.valueOf(authentication.getName());
-        } catch (NumberFormatException e) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED,
-                    "Identidade do usuário inválida.");
-        }
-    }
-
     @PostMapping
     public ResponseEntity<Solicitacao> solicitar(
-            Authentication authentication,
-            @RequestBody SolicitarDoacaoRequest dados) {
+            @RequestBody SolicitarDoacaoRequest dados,
+            Authentication authentication) {
 
         Long usuarioId = obterUsuarioId(authentication);
 
-        Solicitacao solicitacao =
-                solicitacaoService.solicitar(dados, usuarioId);
-
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(solicitacao);
+                .body(solicitacaoService.solicitar(dados, usuarioId));
     }
 
     @GetMapping
@@ -94,19 +81,6 @@ public class SolicitacaoController {
                         instituicaoId, usuarioId));
     }
 
-    @PatchMapping("/{id}/concluir")
-    public ResponseEntity<Solicitacao> concluir(@PathVariable Long id, Authentication authentication) {
-        Long usuarioId = obterUsuarioId(authentication);
-        return ResponseEntity.ok(solicitacaoService.concluir(id, usuarioId));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> cancelar(@PathVariable Long id, Authentication authentication) {
-        Long usuarioId = obterUsuarioId(authentication);
-        solicitacaoService.cancelar(id, usuarioId);
-        return ResponseEntity.noContent().build();
-    }
-
     @PatchMapping("/{id}/aceitar")
     public ResponseEntity<Solicitacao> aceitar(
             @PathVariable Long id,
@@ -127,5 +101,72 @@ public class SolicitacaoController {
 
         return ResponseEntity.ok(
                 solicitacaoService.recusar(id, usuarioId));
+    }
+
+    @PatchMapping("/{id}/concluir")
+    public ResponseEntity<Solicitacao> concluir(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        Long usuarioId = obterUsuarioId(authentication);
+
+        return ResponseEntity.ok(
+                solicitacaoService.concluir(id, usuarioId));
+    }
+
+    @PatchMapping("/{id}/agendamento")
+    public ResponseEntity<Solicitacao> agendarRetirada(
+            @PathVariable Long id,
+            Authentication authentication,
+            @RequestBody AgendamentoRetiradaRequest dados) {
+
+        Long usuarioId = obterUsuarioId(authentication);
+
+        return ResponseEntity.ok(
+                solicitacaoService.agendarRetirada(
+                        id, usuarioId, dados));
+    }
+
+    @PatchMapping("/{id}/confirmar-recebimento")
+    public ResponseEntity<Solicitacao> confirmarRecebimento(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        Long usuarioId = obterUsuarioId(authentication);
+
+        return ResponseEntity.ok(
+                solicitacaoService.confirmarRecebimento(
+                        id, usuarioId));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> cancelar(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        Long usuarioId = obterUsuarioId(authentication);
+
+        solicitacaoService.cancelar(id, usuarioId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    private Long obterUsuarioId(Authentication authentication) {
+
+        if (authentication == null
+                || authentication.getName() == null
+                || authentication.getName().isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Usuário não autenticado.");
+        }
+
+        try {
+            return Long.valueOf(authentication.getName());
+        } catch (NumberFormatException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "A identificação do usuário autenticado é inválida.");
+        }
     }
 }

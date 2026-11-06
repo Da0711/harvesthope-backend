@@ -1,6 +1,7 @@
 
 package com.harvesthope.model.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.harvesthope.model.dto.AgendamentoRetiradaRequest;
 import com.harvesthope.model.dto.SolicitarDoacaoRequest;
 import com.harvesthope.model.entity.Doacao;
 import com.harvesthope.model.entity.Instituicao;
@@ -85,9 +87,7 @@ public class SolicitacaoService {
         }
 
         if (!"Disponível".equalsIgnoreCase(
-                doacao.getStatus() == null
-                        ? ""
-                        : doacao.getStatus().trim())) {
+                doacao.getStatus() == null ? "" : doacao.getStatus().trim())) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "Esta doação não está disponível.");
@@ -97,7 +97,7 @@ public class SolicitacaoService {
                 instituicao.getId(), doacao.getId())) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "A doação já foi solicitada por outra instituição.");
+                    "A doação já foi solicitada por esta instituição.");
         }
 
         Solicitacao solicitacao = new Solicitacao();
@@ -106,7 +106,14 @@ public class SolicitacaoService {
         solicitacao.setStatus("PENDENTE");
 
         Solicitacao salva = solicitacaoRepository.save(solicitacao);
-        notificacaoService.criar(doacao.getDoador().getId(), "Nova solicitação de doação", "Uma instituição solicitou " + doacao.getNomeAlimento() + ".", "SOLICITACAO", salva.getId());
+
+        notificacaoService.criar(
+                doacao.getDoador().getId(),
+                "Nova solicitação de doação",
+                "Uma instituição solicitou " + doacao.getNomeAlimento() + ".",
+                "SOLICITACAO",
+                salva.getId());
+
         return salva;
     }
 
@@ -129,9 +136,7 @@ public class SolicitacaoService {
                         "Doação não encontrada."));
 
         if (!"Disponível".equalsIgnoreCase(
-                doacao.getStatus() == null
-                        ? ""
-                        : doacao.getStatus().trim())) {
+                doacao.getStatus() == null ? "" : doacao.getStatus().trim())) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "Esta doação não está disponível para reserva.");
@@ -142,7 +147,18 @@ public class SolicitacaoService {
 
         doacaoRepository.save(doacao);
         Solicitacao salva = solicitacaoRepository.save(solicitacao);
-        notificacaoService.criar(solicitacao.getInstituicao().getUsuario().getId(), "Solicitação aceita", "Sua solicitação para " + doacao.getNomeAlimento() + " foi aceita.", "SOLICITACAO", salva.getId());
+
+        if (solicitacao.getInstituicao() != null
+                && solicitacao.getInstituicao().getUsuario() != null) {
+            notificacaoService.criar(
+                    solicitacao.getInstituicao().getUsuario().getId(),
+                    "Solicitação aceita",
+                    "Sua solicitação para " + doacao.getNomeAlimento()
+                            + " foi aceita.",
+                    "SOLICITACAO",
+                    salva.getId());
+        }
+
         return salva;
     }
 
@@ -157,43 +173,205 @@ public class SolicitacaoService {
         validarPendente(solicitacao);
 
         solicitacao.setStatus("RECUSADA");
+
         Solicitacao salva = solicitacaoRepository.save(solicitacao);
-        notificacaoService.criar(solicitacao.getInstituicao().getUsuario().getId(), "Solicitação recusada", "Sua solicitação para " + solicitacao.getDoacao().getNomeAlimento() + " foi recusada.", "SOLICITACAO", salva.getId());
+
+        if (solicitacao.getInstituicao() != null
+                && solicitacao.getInstituicao().getUsuario() != null) {
+            notificacaoService.criar(
+                    solicitacao.getInstituicao().getUsuario().getId(),
+                    "Solicitação recusada",
+                    "Sua solicitação para "
+                            + solicitacao.getDoacao().getNomeAlimento()
+                            + " foi recusada.",
+                    "SOLICITACAO",
+                    salva.getId());
+        }
+
+        return salva;
+    }
+
+    /*
+     * Mantém a rota antiga, mas impede que o doador conclua a doação.
+     * A conclusão agora depende da confirmação da instituição.
+     */
+    @Transactional
+    public Solicitacao concluir(Long solicitacaoId, Long usuarioId) {
+
+        throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "Somente a instituição pode confirmar o recebimento da doação.");
+    }
+
+    @Transactional
+    public Solicitacao agendarRetirada(
+            Long solicitacaoId,
+            Long usuarioId,
+            AgendamentoRetiradaRequest dados) {
+
+        if (dados == null
+                || dados.getDataRetirada() == null
+                || dados.getLocalRetirada() == null
+                || dados.getLocalRetirada().isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Informe a data, o horário e o local da retirada.");
+        }
+
+        if (!dados.getDataRetirada().isAfter(LocalDateTime.now())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A retirada deve ser agendada para uma data futura.");
+        }
+
+        String local = dados.getLocalRetirada().trim();
+
+        if (local.length() > 300) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "O local da retirada deve ter no máximo 300 caracteres.");
+        }
+
+        Solicitacao solicitacao =
+                buscarSolicitacaoObrigatoria(solicitacaoId);
+
+        Usuario doador = validarDoador(usuarioId);
+        validarProprietario(solicitacao, doador);
+
+        if (!"ACEITA".equalsIgnoreCase(solicitacao.getStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Somente solicitações aceitas podem ser agendadas.");
+        }
+
+        if (solicitacao.getDataConfirmacaoRecebimento() != null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "O recebimento já foi confirmado; não é possível alterar o agendamento.");
+        }
+
+        solicitacao.setDataRetirada(dados.getDataRetirada());
+        solicitacao.setLocalRetirada(local);
+
+        Solicitacao salva = solicitacaoRepository.save(solicitacao);
+
+        if (solicitacao.getInstituicao() != null
+                && solicitacao.getInstituicao().getUsuario() != null) {
+            notificacaoService.criar(
+                    solicitacao.getInstituicao().getUsuario().getId(),
+                    "Retirada agendada",
+                    "A retirada de "
+                            + solicitacao.getDoacao().getNomeAlimento()
+                            + " foi agendada para "
+                            + dados.getDataRetirada()
+                            + ", em " + local + ".",
+                    "SOLICITACAO",
+                    salva.getId());
+        }
+
         return salva;
     }
 
     @Transactional
-    public Solicitacao concluir(Long solicitacaoId, Long usuarioId) {
-        Solicitacao solicitacao = buscarSolicitacaoObrigatoria(solicitacaoId);
-        Usuario usuario = validarDoador(usuarioId);
-        validarProprietario(solicitacao, usuario);
+    public Solicitacao confirmarRecebimento(
+            Long solicitacaoId,
+            Long usuarioId) {
+
+        Usuario usuario = buscarUsuario(usuarioId);
+        validarTipo(usuario, "INSTITUICAO");
+
+        Instituicao instituicao = buscarInstituicaoDoUsuario(usuarioId);
+
+        Solicitacao solicitacao = solicitacaoRepository
+                .findByIdAndInstituicao_Id(
+                        solicitacaoId, instituicao.getId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Solicitação não encontrada para esta instituição."));
+
         if (!"ACEITA".equalsIgnoreCase(solicitacao.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Somente solicitações aceitas podem ser concluídas.");
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Somente solicitações aceitas podem ter o recebimento confirmado.");
         }
-        solicitacao.setStatus("CONCLUIDA");
+
+        if (solicitacao.getDataRetirada() == null
+                || solicitacao.getLocalRetirada() == null
+                || solicitacao.getLocalRetirada().isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "O doador precisa agendar a retirada antes da confirmação.");
+        }
+
+        if (solicitacao.getDataConfirmacaoRecebimento() != null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "O recebimento já foi confirmado.");
+        }
+
         Doacao doacao = solicitacao.getDoacao();
+
+        solicitacao.setDataConfirmacaoRecebimento(LocalDateTime.now());
+        solicitacao.setStatus("CONCLUIDA");
         doacao.setStatus("Concluída");
+
         doacaoRepository.save(doacao);
         Solicitacao salva = solicitacaoRepository.save(solicitacao);
-        if (solicitacao.getInstituicao() != null && solicitacao.getInstituicao().getUsuario() != null) {
-            notificacaoService.criar(solicitacao.getInstituicao().getUsuario().getId(), "Doação concluída", "A doação de " + doacao.getNomeAlimento() + " foi marcada como concluída.", "SOLICITACAO", salva.getId());
+
+        if (doacao.getDoador() != null) {
+            notificacaoService.criar(
+                    doacao.getDoador().getId(),
+                    "Recebimento confirmado",
+                    "A instituição confirmou o recebimento de "
+                            + doacao.getNomeAlimento() + ".",
+                    "SOLICITACAO",
+                    salva.getId());
         }
+
         return salva;
     }
 
     @Transactional
     public void cancelar(Long solicitacaoId, Long usuarioId) {
+
         Usuario usuario = buscarUsuario(usuarioId);
         validarTipo(usuario, "INSTITUICAO");
-        Instituicao instituicao = buscarInstituicaoDoUsuario(usuarioId);
-        Solicitacao solicitacao = solicitacaoRepository.findByIdAndInstituicao_Id(solicitacaoId, instituicao.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Solicitação não encontrada."));
+
+        Instituicao instituicao =
+                buscarInstituicaoDoUsuario(usuarioId);
+
+        Solicitacao solicitacao = solicitacaoRepository
+                .findByIdAndInstituicao_Id(
+                        solicitacaoId, instituicao.getId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Solicitação não encontrada."));
+
         if (!"PENDENTE".equalsIgnoreCase(solicitacao.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Somente solicitações pendentes podem ser canceladas.");
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Somente solicitações pendentes podem ser canceladas.");
         }
+
+        Long doadorId = solicitacao.getDoacao() != null
+                && solicitacao.getDoacao().getDoador() != null
+                ? solicitacao.getDoacao().getDoador().getId()
+                : null;
+
+        String nomeAlimento = solicitacao.getDoacao() != null
+                ? solicitacao.getDoacao().getNomeAlimento()
+                : "doação";
+
         solicitacaoRepository.delete(solicitacao);
-        if (solicitacao.getDoacao() != null && solicitacao.getDoacao().getDoador() != null) {
-            notificacaoService.criar(solicitacao.getDoacao().getDoador().getId(), "Solicitação cancelada", "Uma instituição cancelou a solicitação para " + solicitacao.getDoacao().getNomeAlimento() + ".", "SOLICITACAO", solicitacaoId);
+
+        if (doadorId != null) {
+            notificacaoService.criar(
+                    doadorId,
+                    "Solicitação cancelada",
+                    "Uma instituição cancelou a solicitação para "
+                            + nomeAlimento + ".",
+                    "SOLICITACAO",
+                    solicitacaoId);
         }
     }
 
@@ -203,15 +381,16 @@ public class SolicitacaoService {
         Usuario usuario = buscarUsuario(usuarioId);
 
         if (ehTipo(usuario, "DOADOR")) {
-            return solicitacaoRepository.findByDoacao_Doador_Id(usuarioId);
+            return solicitacaoRepository
+                    .findByDoacao_Doador_Id(usuarioId);
         }
 
         if (ehTipo(usuario, "INSTITUICAO")) {
             Instituicao instituicao =
                     buscarInstituicaoDoUsuario(usuarioId);
 
-            return solicitacaoRepository.findByInstituicao_Id(
-                    instituicao.getId());
+            return solicitacaoRepository
+                    .findByInstituicao_Id(instituicao.getId());
         }
 
         throw new ResponseStatusException(
@@ -233,16 +412,18 @@ public class SolicitacaoService {
         Usuario usuario = buscarUsuario(usuarioId);
 
         if (ehTipo(usuario, "DOADOR")) {
-            return solicitacaoRepository.findByIdAndDoacao_Doador_Id(
-                    solicitacaoId, usuarioId);
+            return solicitacaoRepository
+                    .findByIdAndDoacao_Doador_Id(
+                            solicitacaoId, usuarioId);
         }
 
         if (ehTipo(usuario, "INSTITUICAO")) {
             Instituicao instituicao =
                     buscarInstituicaoDoUsuario(usuarioId);
 
-            return solicitacaoRepository.findByIdAndInstituicao_Id(
-                    solicitacaoId, instituicao.getId());
+            return solicitacaoRepository
+                    .findByIdAndInstituicao_Id(
+                            solicitacaoId, instituicao.getId());
         }
 
         throw new ResponseStatusException(
@@ -277,7 +458,8 @@ public class SolicitacaoService {
                     "Você não pode consultar solicitações desta instituição.");
         }
 
-        return solicitacaoRepository.findByInstituicao_Id(instituicaoId);
+        return solicitacaoRepository
+                .findByInstituicao_Id(instituicaoId);
     }
 
     private Usuario buscarUsuario(Long usuarioId) {
@@ -295,6 +477,7 @@ public class SolicitacaoService {
     }
 
     private Instituicao buscarInstituicaoDoUsuario(Long usuarioId) {
+
         return instituicaoRepository.findByUsuario_Id(usuarioId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.FORBIDDEN,
@@ -302,12 +485,14 @@ public class SolicitacaoService {
     }
 
     private Usuario validarDoador(Long usuarioId) {
+
         Usuario usuario = buscarUsuario(usuarioId);
         validarTipo(usuario, "DOADOR");
         return usuario;
     }
 
     private void validarTipo(Usuario usuario, String tipoEsperado) {
+
         if (!ehTipo(usuario, tipoEsperado)) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
@@ -316,6 +501,7 @@ public class SolicitacaoService {
     }
 
     private boolean ehTipo(Usuario usuario, String tipo) {
+
         return usuario.getTipoUsuario() != null
                 && tipo.equalsIgnoreCase(
                         usuario.getTipoUsuario().trim());
@@ -353,6 +539,7 @@ public class SolicitacaoService {
     }
 
     private void validarPendente(Solicitacao solicitacao) {
+
         if (solicitacao.getStatus() == null
                 || !"PENDENTE".equalsIgnoreCase(
                         solicitacao.getStatus().trim())) {

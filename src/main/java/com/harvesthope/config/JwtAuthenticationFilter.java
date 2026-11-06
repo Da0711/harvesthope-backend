@@ -43,29 +43,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = authorization.substring(7);
+        String token = authorization.substring(7).trim();
+
+        if (token.isEmpty()) {
+            SecurityContextHolder.clearContext();
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
 
         try {
             Claims claims = jwtService.validarToken(token);
 
             String usuarioId = claims.getSubject();
-            String tipoUsuario = claims.get("tipoUsuario", String.class);
+            String tipoUsuario =
+                    claims.get("tipoUsuario", String.class);
 
-            if (usuarioId == null || tipoUsuario == null) {
+            if (usuarioId == null || usuarioId.isBlank()
+                    || tipoUsuario == null || tipoUsuario.isBlank()) {
                 SecurityContextHolder.clearContext();
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
                 return;
             }
 
-            var autenticacao = new UsernamePasswordAuthenticationToken(
-                    usuarioId,
-                    null,
-                    List.of(
-                            new SimpleGrantedAuthority(
-                                    "ROLE_" + tipoUsuario
+            var autenticacao =
+                    new UsernamePasswordAuthenticationToken(
+                            usuarioId,
+                            null,
+                            List.of(
+                                    new SimpleGrantedAuthority(
+                                            "ROLE_" + tipoUsuario
+                                    )
                             )
-                    )
-            );
+                    );
 
             autenticacao.setDetails(
                     new WebAuthenticationDetailsSource()
@@ -76,6 +85,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .setAuthentication(autenticacao);
 
         } catch (JwtException | IllegalArgumentException e) {
+            // Registra o tipo do erro sem expor o token ou a chave secreta.
+            System.err.println(
+                    "Falha ao validar JWT: "
+                            + e.getClass().getSimpleName()
+            );
+
             SecurityContextHolder.clearContext();
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
             return;

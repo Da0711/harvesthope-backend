@@ -32,6 +32,12 @@
             <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
 
+        <!-- Envio de e-mails com SMTP -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
         <!-- Persistência com JPA e Hibernate -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

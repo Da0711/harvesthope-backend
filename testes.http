@@ -32,8 +32,8 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "email": "doador.http.20261014@harvesthope.com",
-  "senha": "SenhaTeste123!"
+  "email": "coracoes@intituicao.com",
+  "senha": "Marii2808"
 }
 
 ###
@@ -490,3 +490,42 @@ Content-Type: application/json
   "localRetirada": "Barueri - SP",
   "foto": ""
 }
+
+#####################################3
+
+POST http://localhost:8081/api/v1/suporte/chamados
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI3IiwiZW1haWwiOiJjb3JhY29lc0BpbnRpdHVpY2FvLmNvbSIsInRpcG9Vc3VhcmlvIjoiSU5TVElUVUlDQU8iLCJpYXQiOjE3OTM4MjI3NjAsImV4cCI6MTc5MzgyNjM2MH0.oBW4cCYKC8BhDieZislrI7eXLHHQZfeAkcfQ7LnnJP9EJyPHd3DvR-_UxcYukEUEwrsfAvnwDSmCD0rFgReCnw
+Content-Type: application/json
+
+{
+    "assunto": "Teste do suporte",
+    "mensagem": "Estou testando o cadastro de chamados do Harvest Hope."
+}
+
+GET http://localhost:8081/api/v1/suporte/meus-chamados
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI3IiwiZW1haWwiOiJjb3JhY29lc0BpbnRpdHVpY2FvLmNvbSIsInRpcG9Vc3VhcmlvIjoiSU5TVElUVUlDQU8iLCJpYXQiOjE3OTM4MjI3NjAsImV4cCI6MTc5MzgyNjM2MH0.oBW4cCYKC8BhDieZislrI7eXLHHQZfeAkcfQ7LnnJP9EJyPHd3DvR-_UxcYukEUEwrsfAvnwDSmCD0rFgReCnw
+
+### Login administrador
+POST http://localhost:8081/api/auth/signin
+Content-Type: application/json
+
+{
+    "email": "harvesthopesuporte@gmail.com",
+    "senha": "28082009MD"
+}
+
+### Listar todos os chamados (ADMIN)
+GET http://localhost:8081/api/v1/suporte/admin/chamados
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxMDAwNiIsImVtYWlsIjoiaGFydmVzdGhvcGVzdXBvcnRlQGdtYWlsLmNvbSIsInRpcG9Vc3VhcmlvIjoiQURNSU4iLCJpYXQiOjE3OTM4MjM5MjQsImV4cCI6MTc5MzgyNzUyNH0.wWcoj08PnehRieP_cwod4_88Vvg7QC26u2CrQrJypWFps0xxpF1oV3lF7xDb9oq4qjXGX7Y2sCL_Pv13jS2wYQ
+
+### Atualizar status
+PATCH http://localhost:8081/api/v1/suporte/admin/chamados/1/status
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxMDAwNiIsImVtYWlsIjoiaGFydmVzdGhvcGVzdXBvcnRlQGdtYWlsLmNvbSIsInRpcG9Vc3VhcmlvIjoiQURNSU4iLCJpYXQiOjE3OTM4MjQxMTAsImV4cCI6MTc5MzgyNzcxMH0.ZscaEByWNwMMwHaHnxMEtzX_93h34LgPaWO-2lSerWaCMf8JESJSZC16qr1RqLbPO_7lPhvOazefyZGx_v6tsA
+Content-Type: application/json
+
+{
+    "status": "RESOLVIDO"
+}
+
+GET http://localhost:8081/api/v1/admin/solicitacoes
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxMDAwNiIsImVtYWlsIjoiaGFydmVzdGhvcGVzdXBvcnRlQGdtYWlsLmNvbSIsInRpcG9Vc3VhcmlvIjoiQURNSU4iLCJpYXQiOjE3OTM4OTA4NzUsImV4cCI6MTc5Mzg5NDQ3NX0.j3uRjbEOFm00-ns6xUOPLGPCoIPzihBJD9X-3WQCAfcO-BQQL395pio0D-r8VSph9ZLSPXMbJScjMcsFSoL4aA
